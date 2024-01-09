@@ -2,10 +2,30 @@
 import * as localFile from "./local_file.js";
 
 let SYSTEM = null;
+let lastWrite = 0;
+
+function date() {
+  return new Date().toLocaleString('en-US', {
+    hour12: false,
+    weekday: 'short',
+    timeZoneName: 'short',
+    year: 'numeric',
+    month: 'short',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  }).replace(/(?:(\d),)/g, '$1');
+}
 
 async function postLine(line) {
-  console.log("postLine", line);
-  await SYSTEM.write(line);
+  if (!SYSTEM) return;
+
+  if (Date.now() - lastWrite > 60*60*1000) {
+    await SYSTEM.writeHeader(date());
+  }
+  lastWrite = Date.now();
+  await SYSTEM.writeLine(line);
 }
 
 function updateWords(wc) {
