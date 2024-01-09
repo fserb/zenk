@@ -33,9 +33,53 @@ main {
   margin: 0 auto;
   padding: 0;
   box-sizing: border-box;
-  display: flex;
+  display: none;
   font-size: 24px;
 }
+
+#about {
+  max-width: 650px;
+  width: 75%;
+  min-height: 50%;
+}
+
+#about h1 {
+  color: #bd0000;
+  font-size: 1.5em;
+}
+#about h2 {
+  font-size: 1em;
+  padding-bottom: 2em;
+}
+
+#targets {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1em;
+}
+
+#targets button {
+  height: 3em;
+  max-width: 10em;
+  background-color: #FAFAFA;
+  border: 1px solid #bd0000;
+  color: #bd0000;
+  font-size: 0.75em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  cursor: pointer;
+  font-weight: bold;
+  user-select: none;
+  border-radius: 0.25em;
+}
+
+#targets button:hover {
+  background-color: #bd0000;
+  color: #FAFAFA;
+}
+
 
 #inp {
   width: 90%;
