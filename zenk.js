@@ -1,5 +1,7 @@
 
 import * as localFile from "./local_file.js";
+// import * as googleDrive from "./gdrive.js";
+import * as github from "./github.js";
 
 let SYSTEM = null;
 let lastWrite = 0;
@@ -59,6 +61,18 @@ function about() {
   document.getElementById("target_file").addEventListener("click", async () => {
     if (!await localFile.init()) document.location.reload();
     SYSTEM = localFile;
+    editor();
+  });
+
+  // document.getElementById("target_gdrive").addEventListener("click", async () => {
+  //   if (!await googleDrive.init()) document.location.reload();
+  //   SYSTEM = googleDrive;
+  //   editor();
+  // });
+
+  document.getElementById("target_github").addEventListener("click", async () => {
+    if (!await github.init()) document.location.reload();
+    SYSTEM = github;
     editor();
   });
 }
@@ -143,5 +157,8 @@ function editor() {
 function main() {
   about();
 }
+
+
+await github.startup();
 
 main();
