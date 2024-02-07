@@ -5,6 +5,43 @@ import {GITHUB_CLIENT_ID, GITHUB_SECRET} from './dev.js';
 
 let octokit = null;
 
+async function buildRepoForm() {
+  const about = document.getElementById("about");
+  about.innerHTML = `
+    <p>Select the repository you want to use:</p>
+    <div id="github_form">
+      <select id="github_repo"><option>Loading...</option></select>
+      <input type="submit" id="github_submit" value="submit" />
+    </div>
+  `;
+  const select = document.getElementById("github_repo");
+  const res = await octokit.rest.repos.listForAuthenticatedUser({visibility: "all", per_page: 100});
+  const options = [];
+  for (const repo of res.data) {
+    const option = document.createElement("option");
+    option.value = repo.full_name;
+    option.textContent = repo.full_name;
+    options.push(option);
+  }
+  options.sort((a, b) => a.textContent.localeCompare(b.textContent));
+  select.innerHTML = "";
+  for (const option of options) {
+    select.appendChild(option);
+  }
+
+  let repo = null;
+
+  await new Promise(acc => {
+    document.getElementById("github_submit").addEventListener("click", async (ev) => {
+      ev.preventDefault();
+      repo = select.value;
+      acc();
+    });
+  });
+
+  return repo;
+}
+
 export async function startup() {
   const params = new URLSearchParams(document.location.search.substring(1));
   if (params.get("req") === "github") {
@@ -39,20 +76,47 @@ export async function startup() {
   console.log("TOKEN", token);
   if (!token) return false;
 
-  // octokit = new Octokit({ auth: token });
+  octokit = new Octokit({ auth: token });
 
-  // try {
-  //   await octokit.rest.users.getAuthenticated();
-  // } catch (error) {
-  //   if (error.status === 401) {
-  //     return false; // Token is invalid or expired
-  //   }
-  //   throw error;
-  // }
+  try {
+    await octokit.rest.users.getAuthenticated();
+  } catch (error) {
+    if (error.status === 401) {
+      localStorage.removeItem("github_token");
+      return false;
+    }
+    throw error;
+  }
+
+  let repo = localStorage.getItem("github_repo");
+
+  if (!repo) {
+    repo = await buildRepoForm();
+    localStorage.setItem("github_repo", repo);
+  }
+
+  // check repo exists and has write access
+  try {
+    await octokit.rest.repos.get({
+      owner: repo.split("/")[0],
+      repo: repo.split("/")[1],
+    });
+  } catch (error) {
+    console.error("REPO ERROR", error);
+    if (error.status === 404) {
+      alert(`Repository ${repo} not found`);
+    } else if (error.status === 403) {
+      alert(`You do not have write access to ${repo}`);
+    }
+    localStorage.removeItem("github_repo");
+    return false;
+  }
+
+  console.log(`Writing to repo ${repo}`);
 
 
 
-  // return true;
+  return true;
 }
 
 export async function init() {

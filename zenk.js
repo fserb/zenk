@@ -154,11 +154,9 @@ function editor() {
   });
 }
 
-function main() {
+if (await github.startup()) {
+  SYSTEM = github;
+  editor();
+} else {
   about();
 }
-
-
-await github.startup();
-
-main();
