@@ -4,6 +4,7 @@ import { Octokit } from "https://esm.sh/octokit";
 import {GITHUB_CLIENT_ID, GITHUB_SECRET} from './dev.js';
 
 let octokit = null;
+let repo = null;
 
 async function buildRepoForm() {
   const about = document.getElementById("about");
@@ -88,7 +89,7 @@ export async function startup() {
     throw error;
   }
 
-  let repo = localStorage.getItem("github_repo");
+  repo = localStorage.getItem("github_repo");
 
   if (!repo) {
     repo = await buildRepoForm();
@@ -109,12 +110,11 @@ export async function startup() {
       alert(`You do not have write access to ${repo}`);
     }
     localStorage.removeItem("github_repo");
+    repo = null;
     return false;
   }
 
   console.log(`Writing to repo ${repo}`);
-
-
 
   return true;
 }
@@ -147,9 +147,6 @@ Access Token</a> for your desired repository, that has
 </div>
 `;
 
-  // document.getElementById("github_token").value = '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';
-  // document.getElementById("github_repo").value = 'zk';
-
   await new Promise(async acc => {
     document.getElementById("github_submit").addEventListener("click", async (ev) => {
       ev.preventDefault();
@@ -163,8 +160,33 @@ Access Token</a> for your desired repository, that has
   });
 }
 
+async function write(line) {
+  let old = "";
+  let old_sha = null;
+  try {
+    const file = await octokit.rest.repos.getContent({
+      owner: repo.split("/")[0],
+      repo: repo.split("/")[1],
+      path: "zen.md",
+    });
+    old = atob(file.data.content);
+    old_sha = file.data.sha;
+  } catch (error) {};
+
+  const res = await octokit.rest.repos.createOrUpdateFileContents({
+    owner: repo.split("/")[0],
+    repo: repo.split("/")[1],
+    path: "zen.md",
+    message: "ZenK update",
+    content: btoa(old + line),
+    sha: old_sha,
+  });
+}
+
 export async function writeHeader(line) {
+  await write(`\n\n## ${line}\n\n`);
 }
 
 export async function writeLine(line) {
+  await write(line + "\n");
 }
