@@ -224,6 +224,15 @@ menu button {
 }
 
 #github_repo {
+  display: block;
+  width: 100%;
+  padding: 0.5em 1em;
+  margin: 0.75em 0;
+  border-radius: 6px;
+}
+
+menu input[type="text"] {
+  display: block;
   width: 100%;
   padding: 0.5em 1em;
   margin: 0.75em 0;

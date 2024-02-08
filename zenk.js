@@ -74,10 +74,7 @@ function editor() {
   const menu = document.getElementsByTagName("menu")[0];
 
   inp.addEventListener("keydown", ev => {
-    if (menu.style.display !== "none") {
-      menu.innerHTML = "";
-      menu.style.display = "none";
-    }
+    closeMenu();
     if (BLOCKED.has(ev.key)) {
       ev.preventDefault();
       return;
@@ -123,6 +120,7 @@ function editor() {
   });
 
   inp.addEventListener("blur", ev => {
+    if (ev.relatedTarget && ev.relatedTarget.closest("menu")) return;
     ev.preventDefault();
     inp.focus();
   });
@@ -133,6 +131,14 @@ function editor() {
   });
 
   window.addEventListener("touchend", ev => {
+    if (ev.target.closest("menu")) return;
+    closeMenu();
+    inp.focus();
+  });
+
+  window.addEventListener("mouseup", ev => {
+    if (ev.target.closest("menu")) return;
+    closeMenu();
     inp.focus();
   });
 }
@@ -182,14 +188,17 @@ function menu() {
 
   menu.innerHTML = `<button id="menu_dc">Disconnect</button>`;
   menu.style.display = "flex";
+
+  document.getElementById("menu_dc").addEventListener("click", () => {
+    if (SYSTEM) {
+      SYSTEM.disconnect();
+      SYSTEM = null;
+    }
+    closeMenu();
+  });
 }
 
 document.getElementById("title").addEventListener("click", menu);
-
-window.addEventListener("mouseup", ev => {
-  if (ev.target.closest("menu")) return;
-  closeMenu();
-});
 
 function about() {
   const menu = document.getElementsByTagName("menu")[0];

@@ -20,6 +20,7 @@ export function debounce(func, wait, immediate = false) {
 
 let octokit = null;
 let repo = null;
+let repofile = null;
 
 async function buildRepoForm() {
   const menu = document.getElementsByTagName("menu")[0];
@@ -60,6 +61,32 @@ async function buildRepoForm() {
   });
 
   return repo;
+}
+
+async function buildRepoFileForm() {
+  const menu = document.getElementsByTagName("menu")[0];
+  menu.innerHTML = `
+  <p>Enter the path to the file you want to use:</p>
+  <div id="github_form">
+    <input id="github_file" type="text" value="zenk.md">
+    <button id="github_submit">select file</button>
+  </div>
+  `;
+  menu.style.display = "flex";
+
+  let file = null;
+
+  await new Promise(acc => {
+    document.getElementById("github_submit").addEventListener("click", async (ev) => {
+      ev.preventDefault();
+      file = document.getElementById("github_file").value;
+      menu.innerHTML = "";
+      menu.style.display = "none";
+      acc();
+    });
+  });
+
+  return file;
 }
 
 export async function init() {
@@ -133,7 +160,14 @@ export async function init() {
     return false;
   }
 
-  console.log(`Writing to repo ${repo}`);
+  repofile = localStorage.getItem("github_file");
+  if (!repofile) {
+    repofile = await buildRepoFileForm();
+    localStorage.setItem("github_file", repofile);
+    if (!repofile) return false;
+  }
+
+  console.log(`Writing to ${repo}:${repofile}`);
 
   return true;
 }
@@ -157,8 +191,10 @@ export function connect() {
 export function disconnect() {
   localStorage.removeItem("github_token");
   localStorage.removeItem("github_repo");
+  localStorage.removeItem("github_file");
   repo = null;
   octokit = null;
+  repofile = null;
 }
 
 async function write(content) {
@@ -169,7 +205,7 @@ async function write(content) {
     const file = await octokit.rest.repos.getContent({
       owner: repo.split("/")[0],
       repo: repo.split("/")[1],
-      path: "zen.md",
+      path: repofile,
     });
     old = atob(file.data.content);
     old_sha = file.data.sha;
@@ -178,7 +214,7 @@ async function write(content) {
   const res = await octokit.rest.repos.createOrUpdateFileContents({
     owner: repo.split("/")[0],
     repo: repo.split("/")[1],
-    path: "zen.md",
+    path: repofile,
     message: "ZenK update",
     content: btoa(old + content),
     sha: old_sha,
