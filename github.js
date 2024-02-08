@@ -3,6 +3,21 @@ import { Octokit } from "https://esm.sh/octokit";
 
 import {GITHUB_CLIENT_ID, GITHUB_SECRET} from './dev.js';
 
+export function debounce(func, wait, immediate = false) {
+  let timeout;
+  return function(...args) {
+    const context = this;
+    const later = function() {
+      timeout = null;
+      if (!immediate) func.apply(context, args);
+    };
+    const callNow = immediate && !timeout;
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+    if (callNow) func.apply(context, args);
+  };
+}
+
 let octokit = null;
 let repo = null;
 
@@ -134,31 +149,9 @@ export async function init() {
   const url = `https://github.com/login/oauth/authorize?${params}`;
   document.location = url;
   return true;
-
-  const about = document.getElementById("about");
-  about.innerHTML = `
-<p>Create a <a href='https://github.com/settings/personal-access-tokens/new'>Personal
-Access Token</a> for your desired repository, that has
-"content read/write access" and paste it here:</p>
-<div id="github_form">
-<input type="text" id="github_token" value="" placeholder="personal access token" />
-<input type="text" id="github_repo" value="" placeholder="repo name" />
-<input type="submit" id="github_submit" value="submit" />
-</div>
-`;
-
-  await new Promise(async acc => {
-    document.getElementById("github_submit").addEventListener("click", async (ev) => {
-      ev.preventDefault();
-      const token = document.getElementById("github_token");
-      const repo = document.getElementById("github_repo");
-      localStorage.setItem("github_token", token.value);
-      localStorage.setItem("github_repo", repo.value);
-      const valid = await startup();
-      // acc(valid);
-    });
-  });
 }
+
+const buffer = [];
 
 async function write(line) {
   let old = "";
@@ -183,10 +176,20 @@ async function write(line) {
   });
 }
 
+const sync = debounce(async () => {
+  if (buffer.length === 0) return;
+  const text = buffer.join("\n") + "\n";
+  console.log(`writting ${buffer.length} lines`);
+  buffer.length = 0;
+  await write(text);
+}, 5000);
+
 export async function writeHeader(line) {
-  await write(`\n\n## ${line}\n\n`);
+  buffer.push(`\n\n## ${line}\n`);
+  sync();
 }
 
 export async function writeLine(line) {
-  await write(line + "\n");
+  buffer.push(line);
+  sync();
 }
