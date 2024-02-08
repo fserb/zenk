@@ -1,10 +1,10 @@
 
-import * as localFile from "./local_file.js";
 // import * as googleDrive from "./gdrive.js";
 import * as github from "./github.js";
 
 let SYSTEM = null;
 let lastWrite = 0;
+const text = [];
 
 function date() {
   return new Date().toLocaleString('en-US', {
@@ -21,13 +21,16 @@ function date() {
 }
 
 async function postLine(line) {
-  if (!SYSTEM) return;
-
   if (Date.now() - lastWrite > 60*60*1000) {
-    await SYSTEM.writeHeader(date());
+    text.push({header: true, value: date()});
   }
   lastWrite = Date.now();
-  await SYSTEM.writeLine(line);
+  text.push(line);
+  document.getElementById("status").classList.add("load");
+
+  if (SYSTEM) {
+    SYSTEM.sync(text);
+  }
 }
 
 function updateWords(wc) {
@@ -55,33 +58,7 @@ function updateWords(wc) {
   }
 }
 
-function about() {
-  // TODO: if called twice, need to clone the nodes to remove the events.
-
-  document.getElementById("target_file").addEventListener("click", async () => {
-    if (!await localFile.init()) document.location.reload();
-    SYSTEM = localFile;
-    editor();
-  });
-
-  // document.getElementById("target_gdrive").addEventListener("click", async () => {
-  //   if (!await googleDrive.init()) document.location.reload();
-  //   SYSTEM = googleDrive;
-  //   editor();
-  // });
-
-  document.getElementById("target_github").addEventListener("click", async () => {
-    if (!await github.init()) document.location.reload();
-    SYSTEM = github;
-    editor();
-  });
-}
-
 function editor() {
-  // TODO: if called twice, need to clone the nodes to remove the events.
-  document.getElementById("block").style.display = "flex";
-  document.getElementById("about").style.display = "none";
-
   const inp = /** @type {HTMLTextAreaElement} */
     (document.getElementById("inp"));
 
@@ -94,7 +71,13 @@ function editor() {
   let lastEnter = inp.value.length;
   let wordCount = 0;
 
+  const menu = document.getElementsByTagName("menu")[0];
+
   inp.addEventListener("keydown", ev => {
+    if (menu.style.display !== "none") {
+      menu.innerHTML = "";
+      menu.style.display = "none";
+    }
     if (BLOCKED.has(ev.key)) {
       ev.preventDefault();
       return;
@@ -154,9 +137,78 @@ function editor() {
   });
 }
 
-if (await github.startup()) {
+function download(ev) {
+  const content = text
+    .map(line => line.header ? `\n\n## ${line.value}\n` : line).join("\n");
+
+  const el = document.createElement('a');
+  el.setAttribute('href', 'data:text/markdown;charset=utf-8,' + encodeURIComponent(content));
+  const nameDate = date().replace(/[^a-z0-9]/gi, "_");
+  el.setAttribute('download', `ZenK - ${nameDate}.md`);
+  el.click();
+  closeMenu();
+  document.getElementById("status").classList.remove("load", "sync");
+}
+
+function closeMenu() {
+  const menu = document.getElementsByTagName("menu")[0];
+  menu.innerHTML = "";
+  menu.style.display = "none";
+}
+closeMenu();
+
+function menu() {
+  const menu = document.getElementsByTagName("menu")[0];
+
+  if (menu.style.display !== "none") {
+    closeMenu();
+    return;
+  }
+
+  menu.innerHTML = "";
+
+  if (!SYSTEM) {
+    menu.innerHTML = `
+      <button id="menu_save">Download</button>
+      <button id="menu_github">Connect to GitHub</button>
+    `;
+    menu.style.display = "flex";
+
+    document.getElementById("menu_save").addEventListener("click", download);
+    document.getElementById("menu_github").addEventListener("click", () => github.connect());
+
+    return;
+  }
+
+  menu.innerHTML = `<button id="menu_dc">Disconnect</button>`;
+  menu.style.display = "flex";
+}
+
+document.getElementById("title").addEventListener("click", menu);
+
+window.addEventListener("mouseup", ev => {
+  if (ev.target.closest("menu")) return;
+  closeMenu();
+});
+
+function about() {
+  const menu = document.getElementsByTagName("menu")[0];
+
+  menu.style.display = "flex";
+  menu.innerHTML = `
+  <p><b>ZenK</b> is a non-editable text input<br>
+  by <a href="https://fserb.com">Fernando Serboncini</a>.</p>
+  <p>Click here to retrieve your text or to connect to a service.</p>
+`;
+}
+
+editor();
+
+if (await github.init()) {
   SYSTEM = github;
-  editor();
+  if (text.length > 0) {
+    SYSTEM.sync(text);
+  }
 } else {
   about();
 }

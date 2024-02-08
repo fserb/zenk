@@ -22,14 +22,16 @@ let octokit = null;
 let repo = null;
 
 async function buildRepoForm() {
-  const about = document.getElementById("about");
-  about.innerHTML = `
-    <p>Select the repository you want to use:</p>
-    <div id="github_form">
-      <select id="github_repo"><option>Loading...</option></select>
-      <input type="submit" id="github_submit" value="submit" />
-    </div>
+  const menu = document.getElementsByTagName("menu")[0];
+  menu.innerHTML = `
+  <p>Select the repository you want to use:</p>
+  <div id="github_form">
+    <select id="github_repo"><option>Loading...</option></select>
+    <button id="github_submit">select repo</button>
+  </div>
   `;
+  menu.style.display = "flex";
+
   const select = document.getElementById("github_repo");
   const res = await octokit.rest.repos.listForAuthenticatedUser({visibility: "all", per_page: 100});
   const options = [];
@@ -51,6 +53,8 @@ async function buildRepoForm() {
     document.getElementById("github_submit").addEventListener("click", async (ev) => {
       ev.preventDefault();
       repo = select.value;
+      menu.innerHTML = "";
+      menu.style.display = "none";
       acc();
     });
   });
@@ -58,13 +62,14 @@ async function buildRepoForm() {
   return repo;
 }
 
-export async function startup() {
+export async function init() {
   const params = new URLSearchParams(document.location.search.substring(1));
   if (params.get("req") === "github") {
     const code = params.get("code");
     const state = params.get("state");
     window.history.replaceState({}, document.title, document.location.pathname);
     const storedState = localStorage.getItem("github_state");
+    localStorage.removeItem("github_state");
     if (state !== storedState) {
       console.error(`Invalid state (${state} !== ${storedState})`);
       return false;
@@ -82,14 +87,13 @@ export async function startup() {
       }),
     });
     const data = await res.text();
-    console.log("GITHUB TOKEN", data);
+    // console.log("GITHUB TOKEN", data);
     const token = new URLSearchParams(data).get("access_token");
     localStorage.setItem("github_token", token);
   }
 
-
   const token = localStorage.getItem("github_token");
-  console.log("TOKEN", token);
+  // console.log("TOKEN", token);
   if (!token) return false;
 
   octokit = new Octokit({ auth: token });
@@ -134,7 +138,7 @@ export async function startup() {
   return true;
 }
 
-export async function init() {
+export function connect() {
   const random = new Uint8Array(32);
   window.crypto.getRandomValues(random);
   const state = Array.from(random, byte => byte.toString(16).padStart(2, '0')).join('');
@@ -148,12 +152,17 @@ export async function init() {
   }).toString();
   const url = `https://github.com/login/oauth/authorize?${params}`;
   document.location = url;
-  return true;
 }
 
-const buffer = [];
+export function disconnect() {
+  localStorage.removeItem("github_token");
+  localStorage.removeItem("github_repo");
+  repo = null;
+  octokit = null;
+}
 
-async function write(line) {
+async function write(content) {
+  document.getElementById("status").classList.replace("load", "sync");
   let old = "";
   let old_sha = null;
   try {
@@ -171,25 +180,18 @@ async function write(line) {
     repo: repo.split("/")[1],
     path: "zen.md",
     message: "ZenK update",
-    content: btoa(old + line),
+    content: btoa(old + content),
     sha: old_sha,
   });
+  document.getElementById("status").classList.remove("sync");
 }
 
-const sync = debounce(async () => {
-  if (buffer.length === 0) return;
-  const text = buffer.join("\n") + "\n";
-  console.log(`writting ${buffer.length} lines`);
-  buffer.length = 0;
+export const sync = debounce(async (lines) => {
+  if (lines.length === 0) return;
+  if (!repo || !octokit) return;
+
+  const text = lines
+    .map(line => line.header ? `\n\n## ${line.value}\n` : line).join("\n") + "\n";
+  lines.length = 0;
   await write(text);
 }, 5000);
-
-export async function writeHeader(line) {
-  buffer.push(`\n\n## ${line}\n`);
-  sync();
-}
-
-export async function writeLine(line) {
-  buffer.push(line);
-  sync();
-}

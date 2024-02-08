@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="zenk.css">
+  <link rel="icon" href="favicon.png">
 </head>
 <body>
   <main>
@@ -14,19 +15,16 @@
       <textarea rows="4" id="inp" placeholder=""></textarea>
       <div id="hide"></div>
     </div>
-    <div id="about">
-      <h1>ZenK</h1>
-      <h2>a non-editable text input.</h2>
-
-      <p>Select your target file.</p>
-      <div id="targets">
-        <button id="target_file">local file</button>
-        <button id="target_gdrive">Google Drive</button>
-        <button id="target_github">GitHub</button>
-      </div>
-    </div>
   </main>
-  <footer><div id="words"></div>ZenK</footer>
+  <menu></menu>
+  <footer>
+    <div id="words"></div>
+    <div id="title">ZenK
+    <div id="status">
+      <div id="load"></div>
+      <div id="sync"></div>
+    </div></div>
+  </footer>
   <script type="module" src="zenk.js"></script>
 </body>
 </html>
