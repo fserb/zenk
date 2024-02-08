@@ -238,3 +238,9 @@ menu input[type="text"] {
   margin: 0.75em 0;
   border-radius: 6px;
 }
+
+menu bar {
+  font-size: 0.75em;
+  opacity: 0.9;
+  margin-top: 2em;
+}

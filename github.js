@@ -3,6 +3,8 @@ import { Octokit } from "https://esm.sh/octokit";
 
 import {GITHUB_CLIENT_ID, GITHUB_SECRET} from './dev.js';
 
+import {closeMenu, buildMenu} from "./utils.js";
+
 export function debounce(func, wait, immediate = false) {
   let timeout;
   return function(...args) {
@@ -23,15 +25,13 @@ let repo = null;
 let repofile = null;
 
 async function buildRepoForm() {
-  const menu = document.getElementsByTagName("menu")[0];
-  menu.innerHTML = `
+  buildMenu(`
   <p>Select the repository you want to use:</p>
   <div id="github_form">
     <select id="github_repo"><option>Loading...</option></select>
     <button id="github_submit">select repo</button>
   </div>
-  `;
-  menu.style.display = "flex";
+  `);
 
   const select = document.getElementById("github_repo");
   const res = await octokit.rest.repos.listForAuthenticatedUser({visibility: "all", per_page: 100});
@@ -54,8 +54,7 @@ async function buildRepoForm() {
     document.getElementById("github_submit").addEventListener("click", async (ev) => {
       ev.preventDefault();
       repo = select.value;
-      menu.innerHTML = "";
-      menu.style.display = "none";
+      closeMenu();
       acc();
     });
   });
@@ -64,15 +63,13 @@ async function buildRepoForm() {
 }
 
 async function buildRepoFileForm() {
-  const menu = document.getElementsByTagName("menu")[0];
-  menu.innerHTML = `
+  buildMenu(`
   <p>Enter the path to the file you want to use:</p>
   <div id="github_form">
     <input id="github_file" type="text" value="zenk.md">
     <button id="github_submit">select file</button>
   </div>
-  `;
-  menu.style.display = "flex";
+  `);
 
   let file = null;
 
@@ -80,8 +77,7 @@ async function buildRepoFileForm() {
     document.getElementById("github_submit").addEventListener("click", async (ev) => {
       ev.preventDefault();
       file = document.getElementById("github_file").value;
-      menu.innerHTML = "";
-      menu.style.display = "none";
+      closeMenu();
       acc();
     });
   });

@@ -1,4 +1,6 @@
 
+import {closeMenu, buildMenu} from "./utils.js";
+
 // import * as googleDrive from "./gdrive.js";
 import * as github from "./github.js";
 
@@ -156,11 +158,6 @@ function download(ev) {
   document.getElementById("status").classList.remove("load", "sync");
 }
 
-function closeMenu() {
-  const menu = document.getElementsByTagName("menu")[0];
-  menu.innerHTML = "";
-  menu.style.display = "none";
-}
 closeMenu();
 
 function menu() {
@@ -171,14 +168,11 @@ function menu() {
     return;
   }
 
-  menu.innerHTML = "";
-
   if (!SYSTEM) {
-    menu.innerHTML = `
+    buildMenu(`
       <button id="menu_save">Download</button>
       <button id="menu_github">Connect to GitHub</button>
-    `;
-    menu.style.display = "flex";
+    `);
 
     document.getElementById("menu_save").addEventListener("click", download);
     document.getElementById("menu_github").addEventListener("click", () => github.connect());
@@ -186,8 +180,7 @@ function menu() {
     return;
   }
 
-  menu.innerHTML = `<button id="menu_dc">Disconnect</button>`;
-  menu.style.display = "flex";
+  buildMenu(`<button id="menu_dc">Disconnect</button>`);
 
   document.getElementById("menu_dc").addEventListener("click", () => {
     if (SYSTEM) {
@@ -203,12 +196,10 @@ document.getElementById("title").addEventListener("click", menu);
 function about() {
   const menu = document.getElementsByTagName("menu")[0];
 
-  menu.style.display = "flex";
-  menu.innerHTML = `
+  buildMenu(`
   <p><b>ZenK</b> is a non-editable text input<br>
-  by <a href="https://fserb.com">Fernando Serboncini</a>.</p>
   <p>Click here to retrieve your text or to connect to a service.</p>
-`;
+`);
 }
 
 editor();
