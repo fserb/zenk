@@ -24,6 +24,13 @@ let octokit = null;
 let repo = null;
 let repofile = null;
 
+export function status() {
+  if (repo && repofile) {
+    return `Syncing to ${repo}:${repofile}`;
+  }
+  return "";
+}
+
 async function buildRepoForm() {
   buildMenu(`
   <p>Select the repository you want to use:</p>

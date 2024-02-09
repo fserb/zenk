@@ -180,7 +180,12 @@ function menu() {
     return;
   }
 
-  buildMenu(`<button id="menu_dc">Disconnect</button>`);
+  let status = "";
+  if (SYSTEM) {
+    status = SYSTEM.status();
+  }
+
+  buildMenu(`<p>${status}</p><button id="menu_dc">Disconnect</button>`);
 
   document.getElementById("menu_dc").addEventListener("click", () => {
     if (SYSTEM) {
