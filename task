@@ -1,0 +1,21 @@
+#!/bin/bash
+set -euo pipefail
+IFS=$'\n\t'
+
+
+function sync {
+  webbundler \
+    --alias './dev.js=./prod.js' \
+    index.html > out.html
+  rsync -arv out.html metaphora:zenk/index.html
+  rm -f out.html
+}
+
+function help {
+  echo "$0 <task> <args>"
+  echo "Tasks:"
+  compgen -A function | grep -v "^_" | cat -n
+}
+
+TIMEFORMAT="Task completed in %3lR"
+${@:-help}

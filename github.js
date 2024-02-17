@@ -1,5 +1,5 @@
 // github
-import { Octokit } from "https://esm.sh/octokit";
+import { Octokit } from "./lib/octokit.bundle.js";
 
 import {GITHUB_CLIENT_ID, GITHUB_SECRET} from './dev.js';
 
