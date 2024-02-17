@@ -9,7 +9,7 @@ let lastWrite = 0;
 const text = [];
 
 function date() {
-  return new Date().toLocaleString('en-US', {
+  return new Date().toLocaleString('en-GB', {
     hour12: false,
     weekday: 'short',
     timeZoneName: 'short',
